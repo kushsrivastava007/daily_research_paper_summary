@@ -6,6 +6,9 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # Python path
+      - PYTHONPATH=/app/src
+      
       # OAuth - Google (add your credentials)
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}

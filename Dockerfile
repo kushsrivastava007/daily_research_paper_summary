@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Set PYTHONPATH so Python can find the paper_digest package
+ENV PYTHONPATH=/app/src
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
