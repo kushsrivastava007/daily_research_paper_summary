@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paper Digest</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f8f9fa; color: #1a1a1a; display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 300px; background: #fff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+  .sidebar-header { padding: 16px; border-bottom: 1px solid #e5e7eb; }
+  .sidebar-header h1 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .run-btn { width: 100%; padding: 8px; background: #1a1a1a; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  .run-btn:hover { background: #333; }
+  .run-btn:disabled { background: #999; cursor: default; }
+  .paper-list { flex: 1; overflow-y: auto; }
+  .paper-item { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.1s; text-decoration: none; display: block; }
+  .paper-item:hover { background: #f8f9fa; }
+  .paper-item.active { background: #f0f4ff; border-left: 3px solid #3b5bdb; }
+  .paper-title { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; color: #1a1a1a; }
+  .paper-meta { font-size: 11px; color: #888; display: flex; gap: 8px; }
+  .score-badge { background: #f0fdf4; color: #166534; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+
+  /* Main content */
+  .main { flex: 1; overflow-y: auto; padding: 32px; }
+  .empty-state { text-align: center; padding: 80px 0; color: #888; }
+  .empty-state h2 { font-size: 18px; margin-bottom: 8px; }
+
+  /* Paper detail */
+  .paper-header { margin-bottom: 24px; }
+  .paper-header h2 { font-size: 22px; font-weight: 600; line-height: 1.3; margin-bottom: 8px; }
+  .paper-header a { font-size: 13px; color: #3b5bdb; }
+  .paper-authors { font-size: 13px; color: #666; margin-top: 4px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 24px; }
+  .tab { padding: 10px 20px; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; color: #666; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; font-weight: 500; }
+
+  /* Notes */
+  .tldr { background: #f0f4ff; border-left: 3px solid #3b5bdb; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14px; margin-bottom: 20px; line-height: 1.6; }
+  .section { margin-bottom: 20px; }
+  .section h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin-bottom: 8px; }
+  .section p { font-size: 14px; line-height: 1.7; color: #333; }
+  .concept { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+  .concept-term { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .concept-def { font-size: 13px; color: #555; line-height: 1.5; }
+
+  /* Quiz */
+  .question { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .question-text { font-size: 14px; font-weight: 500; margin-bottom: 12px; line-height: 1.5; }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option { padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: left; background: #fff; }
+  .option:hover { background: #f8f9fa; border-color: #999; }
+  .option.correct { background: #f0fdf4; border-color: #16a34a; color: #166534; }
+  .option.wrong { background: #fef2f2; border-color: #dc2626; color: #991b1b; }
+  .explanation { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 13px; color: #555; line-height: 1.5; display: none; }
+
+  .tag { display: inline-block; background: #f3f4f6; color: #555; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-right: 4px; }
+  #run-status { font-size: 12px; color: #888; margin-top: 6px; min-height: 16px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>📄 Paper Digest</h1>
+    <button class="run-btn" onclick="runPipeline()" id="run-btn">▶ Run pipeline</button>
+    <div id="run-status"></div>
+  </div>
+  <div class="paper-list">
+    {% for paper in papers %}
+    <a class="paper-item {% if selected and selected.id == paper.id %}active{% endif %}"
+       href="/paper/{{ paper.id }}">
+      <div class="paper-title">{{ paper.title[:80] }}{% if paper.title|length > 80 %}...{% endif %}</div>
+      <div class="paper-meta">
+        <span class="score-badge">★ {{ paper.score }}</span>
+        <span>{{ paper.published }}</span>
+      </div>
+    </a>
+    {% else %}
+    <div style="padding:20px; font-size:13px; color:#888; text-align:center;">
+      No papers yet.<br>Click "Run pipeline" to fetch.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="main">
+  {% if not selected %}
+  <div class="empty-state">
+    <h2>Select a paper to study</h2>
+    <p>Click any paper from the sidebar to read its notes and take the quiz.</p>
+  </div>
+
+  {% else %}
+  <div class="paper-header">
+    <h2>{{ selected.title }}</h2>
+    <div class="paper-authors">{{ selected.authors }}</div>
+    <a href="{{ selected.url }}" target="_blank">View on arXiv ↗</a>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('notes', this)">📓 Notes</button>
+    <button class="tab" onclick="showTab('quiz', this)">❓ Quiz</button>
+    <button class="tab" onclick="showTab('abstract', this)">📄 Abstract</button>
+  </div>
+
+  <!-- Notes tab -->
+  <div id="tab-notes">
+    {% if notes %}
+    <div class="tldr">{{ notes.tldr }}</div>
+
+    <div class="section">
+      <h3>Problem</h3>
+      <p>{{ notes.problem }}</p>
+    </div>
+
+    <div class="section">
+      <h3>Solution</h3>
+      <p>{{ notes.solution }}</p>
+    </div>
+
+    <div class="section">
+      <h3>Why it matters to you</h3>
+      <p>{{ notes.practical_relevance }}</p>
+    </div>
+
+    <div class="section">
+      <h3>Key concepts</h3>
+      {% for concept in notes.key_concepts %}
+      <div class="concept">
+        <div class="concept-term">{{ concept.term }}</div>
+        <div class="concept-def">{{ concept.definition }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="section">
+      <h3>Further reading</h3>
+      {% for topic in notes.further_reading %}
+      <span class="tag">{{ topic }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Quiz tab -->
+  <div id="tab-quiz" style="display:none">
+    {% if quiz and quiz.questions %}
+    {% for q in quiz.questions %}
+    <div class="question">
+      <div class="question-text">Q{{ loop.index }}. {{ q.question }}</div>
+      <div class="options">
+        {% for opt in q.options %}
+        <button class="option"
+          onclick="checkAnswer(this, {{ opt[0]|tojson }}, {{ q.answer|tojson }}, {{ (q.explanation or '')|tojson }})">
+          {{ opt }}
+        </button>
+        {% endfor %}
+      </div>
+      <div class="explanation" id="exp-{{ loop.index }}"></div>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Abstract tab -->
+  <div id="tab-abstract" style="display:none">
+    <div class="section">
+      <p style="line-height:1.8">{{ selected.abstract }}</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function showTab(name, btn) {
+  ['notes','quiz','abstract'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function checkAnswer(btn, selected, correct, explanation) {
+  const options = btn.parentElement.querySelectorAll('.option');
+  options.forEach(o => {
+    o.disabled = true;
+    if (o.textContent.trim()[0] === correct) o.classList.add('correct');
+  });
+  if (selected !== correct) btn.classList.add('wrong');
+
+  const expDiv = btn.closest('.question').querySelector('.explanation');
+  expDiv.textContent = explanation;
+  expDiv.style.display = 'block';
+}
+
+async function runPipeline() {
+  const btn = document.getElementById('run-btn');
+  const status = document.getElementById('run-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running...';
+  status.textContent = 'Fetching and processing papers...';
+
+  try {
+    const res = await fetch('/run', { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'success') {
+      status.textContent = `✓ Done — ${data.enriched} papers added`;
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      status.textContent = '✗ Error: ' + data.message;
+    }
+  } catch(e) {
+    status.textContent = '✗ Failed to reach server';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '▶ Run pipeline';
+}
+</script>
+</body>
+</html>

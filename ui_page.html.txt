@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus LLM Interface - Design Concept</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg: '#0F1117',
+                        surface: '#1E293B',
+                        accent: '#6366F1',
+                        border: '#334155',
+                        textMain: '#E2E8F0',
+                        textMuted: '#94A3B8'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        /* Cursor Blink Animation */
+        .cursor-blink { animation: blink 1s step-end infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-bg text-textMain font-sans h-screen overflow-hidden flex selection:bg-accent selection:text-white">
+
+    <aside class="w-64 border-r border-border hidden md:flex flex-col bg-[#0b0d12]">
+        <div class="p-4">
+            <button class="w-full flex items-center justify-center gap-2 bg-surface hover:bg-slate-700 border border-border text-white py-2 px-4 rounded-lg transition-all text-sm font-medium shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                New Chat
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto px-2 space-y-6">
+            <div>
+                <h3 class="px-3 text-xs font-semibold text-textMuted uppercase tracking-wider mb-2">Today</h3>
+                <div class="space-y-0.5">
+                    <button class="w-full text-left px-3 py-2 text-sm text-textMain bg-surface/50 rounded-md border-l-2 border-accent truncate">
+                        React Component Structure
+                    </button>
+                    <button class="w-full text-left px-3 py-2 text-sm text-textMuted hover:bg-surface/30 rounded-md transition-colors truncate">
+                        Analyzing Q3 Metrics
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="px-3 text-xs font-semibold text-textMuted uppercase tracking-wider mb-2">Yesterday</h3>
+                <div class="space-y-0.5">
+                    <button class="w-full text-left px-3 py-2 text-sm text-textMuted hover:bg-surface/30 rounded-md transition-colors truncate">
+                        Python script optimization
+                    </button>
+                    <button class="w-full text-left px-3 py-2 text-sm text-textMuted hover:bg-surface/30 rounded-md transition-colors truncate">
+                        Marketing copy ideas
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-border flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-accent to-purple-500 flex items-center justify-center text-xs font-bold">JD</div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium truncate">John Doe</p>
+                <p class="text-xs text-textMuted truncate">Pro Plan</p>
+            </div>
+            <svg class="w-4 h-4 text-textMuted cursor-pointer hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative">
+        
+        <header class="md:hidden p-4 border-b border-border flex justify-between items-center bg-bg/80 backdrop-blur">
+            <span class="font-semibold">Nexus AI</span>
+            <button class="text-textMuted"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto px-4 py-8 pb-32 scroll-smooth">
+            <div class="max-w-3xl mx-auto space-y-10">
+                
+                <div class="flex gap-4 group">
+                    <div class="w-8 h-8 rounded-full bg-surface border border-border flex-shrink-0 flex items-center justify-center text-textMuted">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    </div>
+                    <div class="flex-1 space-y-2">
+                        <div class="font-medium text-textMain">You</div>
+                        <div class="text-gray-300 leading-relaxed">
+                            Can you create a React component for the input field we discussed? I need it to support drag-and-drop.
+                        </div>
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 text-xs text-textMuted mt-1">
+                            <button class="hover:text-accent flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Edit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <div class="flex-1 space-y-4 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-textMain">Nexus</span>
+                            <span class="text-xs text-textMuted bg-surface px-1.5 py-0.5 rounded border border-border">v4.0</span>
+                        </div>
+                        
+                        <div class="text-gray-300 leading-relaxed">
+                            Here is the <span class="text-accent font-medium">OmniInput</span> component. I've implemented the drag-and-drop zone using the `onDrop` event handler and added the auto-resize logic using `useRef`.
+                        </div>
+
+                        <div class="border border-border rounded-lg overflow-hidden bg-[#0d1117]">
+                            <div class="flex items-center justify-between px-4 py-2 bg-surface/50 border-b border-border">
+                                <span class="text-xs font-mono text-textMuted">OmniInput.jsx</span>
+                                <div class="flex items-center gap-2">
+                                    <button class="text-xs text-textMuted hover:text-white transition flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Copy
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-4 overflow-x-auto">
+                                <pre class="font-mono text-sm leading-relaxed"><code class="text-gray-300"><span class="text-purple-400">import</span> { useState, useRef } <span class="text-purple-400">from</span> <span class="text-green-400">'react'</span>;
+
+<span class="text-blue-400">const</span> <span class="text-yellow-200">OmniInput</span> = () => {
+  <span class="text-blue-400">const</span> [isDragging, setIsDragging] = <span class="text-blue-400">useState</span>(<span class="text-purple-400">false</span>);
+
+  <span class="text-blue-400">return</span> (
+    &lt;<span class="text-pink-400">div</span> 
+      <span class="text-purple-400">className</span>={`relative rounded-2xl border transition-all 
+      ${isDragging ? <span class="text-green-400">'border-indigo-500 bg-indigo-500/10'</span> : <span class="text-green-400">'border-gray-700 bg-slate-800'</span>}`}
+    &gt;
+      {/* Input Logic Here */}
+    &lt;/<span class="text-pink-400">div</span>&gt;
+  );
+};</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="text-gray-300 leading-relaxed">
+                            Would you like me to add the TypeScript interfaces for the props as well<span class="text-accent cursor-blink">▋</span>
+                        </div>
+
+                        <div class="flex items-center gap-4 pt-2">
+                            <button class="p-1 text-textMuted hover:text-white transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+                            <button class="p-1 text-textMuted hover:text-white transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></button>
+                            <button class="p-1 text-textMuted hover:text-white transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-[#0F1117] via-[#0F1117] to-transparent z-10">
+            <div class="max-w-3xl mx-auto relative">
+                
+                <div class="bg-surface border border-border rounded-2xl shadow-2xl focus-within:ring-2 focus-within:ring-accent/50 focus-within:border-accent transition-all duration-300 relative overflow-hidden">
+                    
+                    <textarea 
+                        rows="1" 
+                        placeholder="Message Nexus..." 
+                        class="w-full bg-transparent text-textMain placeholder-gray-500 px-4 py-4 pr-12 resize-none focus:outline-none max-h-64 scrollbar-hide text-base"
+                        style="min-height: 56px;"
+                    ></textarea>
+
+                    <div class="flex justify-between items-center px-3 pb-3 pt-1">
+                        <div class="flex gap-2">
+                            <button class="p-2 text-textMuted hover:text-white hover:bg-slate-700/50 rounded-lg transition" title="Attach File">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                            </button>
+                            <button class="p-2 text-textMuted hover:text-white hover:bg-slate-700/50 rounded-lg transition" title="Search Web">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </button>
+                        </div>
+
+                        <button class="p-2 bg-accent hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3 text-[10px] text-textMuted/60 uppercase tracking-widest font-medium">
+                    Nexus v4.0 &bull; Generated content may be inaccurate
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

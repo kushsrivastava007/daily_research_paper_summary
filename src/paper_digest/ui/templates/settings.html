@@ -1,0 +1,510 @@
+<!-- src/paper_digest/ui/templates/settings.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Paper Digest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .setting-group {
+            margin-bottom: 30px;
+        }
+
+        .setting-group h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .setting-item {
+            margin-bottom: 15px;
+        }
+
+        .setting-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .setting-item input[type="text"],
+        .setting-item input[type="email"],
+        .setting-item input[type="time"],
+        .setting-item select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .setting-item input[type="text"]:focus,
+        .setting-item input[type="email"]:focus,
+        .setting-item input[type="time"]:focus,
+        .setting-item select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .category-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-checkbox:hover {
+            background-color: #f8f8f8;
+        }
+
+        .category-checkbox input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+        }
+
+        .category-checkbox input[type="checkbox"]:checked {
+            accent-color: #667eea;
+        }
+
+        .status-message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .status-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-message.loading {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-save:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-logout {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-logout:hover {
+            background: #e5e5e5;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 14px;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .user-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .user-info strong {
+            color: #333;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 0;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .categories {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Settings</h1>
+            <p>Configure your Paper Digest preferences</p>
+        </div>
+
+        <div class="content">
+            <div id="status-message"></div>
+
+            <!-- User Info -->
+            <div class="user-info" id="user-info" style="display: none;">
+                <p><strong>Email:</strong> <span id="user-email"></span></p>
+                <p><strong>Joined:</strong> <span id="user-date"></span></p>
+            </div>
+
+            <!-- API Key Section -->
+            <div class="setting-group">
+                <h2>🔑 API Configuration</h2>
+                <div class="setting-item">
+                    <label for="groq-api-key">
+                        Groq API Key
+                        <span style="color: #999; font-weight: normal;">(required for paper analysis)</span>
+                    </label>
+                    <input 
+                        type="password" 
+                        id="groq-api-key" 
+                        placeholder="Enter your Groq API key"
+                        autocomplete="off"
+                    >
+                    <small style="color: #999; margin-top: 5px; display: block;">
+                        Get your key from <a href="https://console.groq.com" target="_blank" style="color: #667eea;">console.groq.com</a>
+                    </small>
+                </div>
+            </div>
+
+            <!-- Email Preferences Section -->
+            <div class="setting-group">
+                <h2>📧 Email Notifications</h2>
+                
+                <div class="setting-item">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="receive-emails" checked>
+                        <label for="receive-emails">Receive daily paper digest emails</label>
+                    </div>
+                </div>
+
+                <div class="setting-item" id="send-time-group">
+                    <label for="send-time">Preferred send time (UTC)</label>
+                    <input type="time" id="send-time" value="09:00">
+                </div>
+            </div>
+
+            <!-- Categories Section -->
+            <div class="setting-group">
+                <h2>🏷️ Research Categories</h2>
+                <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                    Select which research categories interest you
+                </p>
+                <div class="categories">
+                    <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="cs.AI" checked>
+                        AI
+                    </label>
+                    <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="cs.LG" checked>
+                        Machine Learning
+                    </label>
+                    <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="cs.CL" checked>
+                        NLP
+                    </label>
+                    <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="cs.IR">
+                        Information Retrieval
+                    </label>
+                    <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="cs.MA">
+                        Multiagent Systems
+                    </label>
+                    <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="stat.ML">
+                        Statistics ML
+                    </label>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button class="btn-save" id="save-button" onclick="saveSettings()">
+                    💾 Save Changes
+                </button>
+                <button class="btn-logout" onclick="logout()">
+                    Logout
+                </button>
+            </div>
+
+            <!-- Navigation -->
+            <div class="nav-links">
+                <a href="/">← Back to Papers</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get token from URL or localStorage
+        function getToken() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get('token');
+            if (token) {
+                localStorage.setItem('token', token);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            return localStorage.getItem('token');
+        }
+
+        // Make API request
+        async function apiRequest(method, endpoint, data = null) {
+            const token = getToken();
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            };
+            if (data) options.body = JSON.stringify(data);
+
+            const response = await fetch(`/api${endpoint}`, options);
+            if (!response.ok) {
+                if (response.status === 401) {
+                    showStatus('Session expired. Please login again.', 'error');
+                    setTimeout(() => window.location.href = '/', 2000);
+                    throw new Error('Unauthorized');
+                }
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        }
+
+        // Show status message
+        function showStatus(message, type = 'success') {
+            const el = document.getElementById('status-message');
+            el.innerHTML = `<div class="status-message ${type}">${message}</div>`;
+            if (type !== 'error' && type !== 'loading') {
+                setTimeout(() => el.innerHTML = '', 3000);
+            }
+        }
+
+        // Load user data
+        async function loadUser() {
+            try {
+                const user = await apiRequest('GET', '/user/me');
+                document.getElementById('user-email').textContent = user.email;
+                document.getElementById('user-info').style.display = 'block';
+
+                // Load preferences
+                const prefs = user.preferences;
+                document.getElementById('receive-emails').checked = prefs.receive_emails !== false;
+                document.getElementById('send-time').value = prefs.send_time || '09:00';
+
+                // Load categories
+                const categories = prefs.categories || ['cs.AI', 'cs.LG', 'cs.CL'];
+                document.querySelectorAll('input[name="category"]').forEach(checkbox => {
+                    checkbox.checked = categories.includes(checkbox.value);
+                });
+            } catch (error) {
+                showStatus('Failed to load user data', 'error');
+                console.error(error);
+            }
+        }
+
+        // Save settings
+        async function saveSettings() {
+            const button = document.getElementById('save-button');
+            button.disabled = true;
+            showStatus('<span class="spinner"></span>Saving settings...', 'loading');
+
+            try {
+                // Collect categories
+                const categories = Array.from(
+                    document.querySelectorAll('input[name="category"]:checked')
+                ).map(cb => cb.value);
+
+                // Save preferences
+                await apiRequest('PUT', '/user/preferences', {
+                    receive_emails: document.getElementById('receive-emails').checked,
+                    send_time: document.getElementById('send-time').value,
+                    categories: categories,
+                });
+
+                // Save API key if changed
+                const apiKey = document.getElementById('groq-api-key').value;
+                if (apiKey) {
+                    await apiRequest('PUT', '/user/api-key', {
+                        groq_api_key: apiKey,
+                    });
+                }
+
+                showStatus('✓ Settings saved successfully!', 'success');
+            } catch (error) {
+                showStatus('Failed to save settings', 'error');
+                console.error(error);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+            loadUser();
+        });
+
+        // Toggle send time visibility
+        document.getElementById('receive-emails').addEventListener('change', (e) => {
+            document.getElementById('send-time-group').style.opacity = e.target.checked ? '1' : '0.5';
+            document.getElementById('send-time').disabled = !e.target.checked;
+        });
+    </script>
+</body>
+</html>
