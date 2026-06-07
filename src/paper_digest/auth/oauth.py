@@ -14,26 +14,28 @@ from paper_digest.storage.database import (
 
 oauth = OAuth()
 
-# Register OAuth apps
-oauth.register(
-    name="google",
-    client_id=settings.GOOGLE_CLIENT_ID,
-    client_secret=settings.GOOGLE_CLIENT_SECRET,
-    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-    client_kwargs={"scope": "openid email profile"},
-)
+# Register OAuth apps - only if credentials are provided
+if settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET:
+    oauth.register(
+        name="google",
+        client_id=settings.GOOGLE_CLIENT_ID,
+        client_secret=settings.GOOGLE_CLIENT_SECRET,
+        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+        client_kwargs={"scope": "openid email profile"},
+    )
 
-oauth.register(
-    name="github",
-    client_id=settings.GITHUB_CLIENT_ID,
-    client_secret=settings.GITHUB_CLIENT_SECRET,
-    access_token_url="https://github.com/login/oauth/access_token",
-    access_token_params=None,
-    authorize_url="https://github.com/login/oauth/authorize",
-    authorize_params=None,
-    api_base_url="https://api.github.com/",
-    client_kwargs={"scope": "user:email"},
-)
+if settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET:
+    oauth.register(
+        name="github",
+        client_id=settings.GITHUB_CLIENT_ID,
+        client_secret=settings.GITHUB_CLIENT_SECRET,
+        access_token_url="https://github.com/login/oauth/access_token",
+        access_token_params=None,
+        authorize_url="https://github.com/login/oauth/authorize",
+        authorize_params=None,
+        api_base_url="https://api.github.com/",
+        client_kwargs={"scope": "user:email"},
+    )
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):

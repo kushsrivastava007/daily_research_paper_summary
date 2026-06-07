@@ -13,9 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src ./src
-COPY .env .env
 
-# Create data directory
+# Create data directory for SQLite
 RUN mkdir -p /app/data
 
 # Expose port
