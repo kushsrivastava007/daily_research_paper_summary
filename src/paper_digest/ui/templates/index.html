@@ -198,6 +198,21 @@ function checkAnswer(btn, selected, correct, explanation) {
   expDiv.style.display = 'block';
 }
 
+function getToken() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if (token) {
+    localStorage.setItem('token', token);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  return localStorage.getItem('token');
+}
+
+function getAuthHeaders() {
+  const token = getToken();
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
 async function runPipeline() {
   const btn = document.getElementById('run-btn');
   const status = document.getElementById('run-status');
@@ -205,18 +220,43 @@ async function runPipeline() {
   btn.textContent = '⏳ Running...';
   status.textContent = 'Fetching and processing papers...';
 
+  const token = getToken();
+  if (!token) {
+    status.textContent = '✗ Login required to run the pipeline. Please authenticate first.';
+    btn.disabled = false;
+    btn.textContent = '▶ Run pipeline';
+    return;
+  }
+
   try {
-    const res = await fetch('/api/run', { method: 'POST' });
-    const data = await res.json();
+    const res = await fetch('/api/run', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    const data = await res.json().catch(() => null);
     console.log('runPipeline response', res.status, data);
+
+    if (!res.ok) {
+      const message = data?.message || data?.detail || 'unknown error';
+      status.textContent = `✗ Error ${res.status}: ${message}`;
+      if (res.status === 401) {
+        status.textContent += ' Please login again.';
+      }
+      return;
+    }
+
     if (data.status === 'success') {
       status.textContent = `✓ Done — ${data.papers} papers added`;
       setTimeout(() => location.reload(), 1500);
     } else {
-      status.textContent = `✗ Error ${res.status}: ${data.message || 'unknown'}`;
+      status.textContent = `✗ Error: ${data.message || 'unknown'}`;
     }
   } catch(e) {
     status.textContent = '✗ Failed to reach server';
+    console.error(e);
   }
 
   btn.disabled = false;
