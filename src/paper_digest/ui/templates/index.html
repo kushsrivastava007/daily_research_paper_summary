@@ -68,6 +68,9 @@
   <div class="sidebar-header">
     <h1>📄 Paper Digest</h1>
     <button class="run-btn" onclick="runPipeline()" id="run-btn">▶ Run pipeline</button>
+    <button class="run-btn" onclick="loginWith('google')" id="login-google-btn">Login with Google</button>
+    <button class="run-btn" onclick="loginWith('github')" id="login-github-btn">Login with GitHub</button>
+    <button class="run-btn" onclick="logout()" id="logout-btn" style="display:none">🔓 Logout</button>
     <div id="run-status"></div>
   </div>
   <div class="paper-list">
@@ -213,6 +216,26 @@ function getAuthHeaders() {
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 
+function loginWith(provider) {
+  window.location.href = `/auth/login/${provider}`;
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  window.location.reload();
+}
+
+function updateAuthButtons() {
+  const token = getToken();
+  const googleBtn = document.getElementById('login-google-btn');
+  const githubBtn = document.getElementById('login-github-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  if (googleBtn) googleBtn.style.display = token ? 'none' : 'block';
+  if (githubBtn) githubBtn.style.display = token ? 'none' : 'block';
+  if (logoutBtn) logoutBtn.style.display = token ? 'block' : 'none';
+}
+
 async function runPipeline() {
   const btn = document.getElementById('run-btn');
   const status = document.getElementById('run-status');
@@ -262,6 +285,10 @@ async function runPipeline() {
   btn.disabled = false;
   btn.textContent = '▶ Run pipeline';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateAuthButtons();
+});
 </script>
 </body>
 </html>
