@@ -21,6 +21,7 @@ from paper_digest.graph.pipeline import run_pipeline
 from paper_digest.auth.oauth import oauth, handle_oauth_callback, get_current_user_id, create_access_token
 from paper_digest.auth.config import settings
 from paper_digest.notifications.email import send_welcome_email
+from paper_digest.scheduler.tasks import start_scheduler
 from pydantic import BaseModel
 
 app = FastAPI(title="Paper Digest")
@@ -37,6 +38,17 @@ if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 init_db()
+
+# ── Startup Event ─────────────────────────────────────────────
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize scheduler on app startup."""
+    try:
+        start_scheduler()
+        print("✓ Scheduler started successfully")
+    except Exception as e:
+        print(f"⚠ Warning: Failed to start scheduler: {e}")
 
 
 # ── Helper Functions ──────────────────────────────────────────
@@ -229,3 +241,9 @@ async def trigger_pipeline(user: dict = Depends(get_user_from_token)):
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.post("/run")
+async def trigger_pipeline_legacy(user: dict = Depends(get_user_from_token)):
+    """Legacy endpoint - use /api/run instead."""
+    return await trigger_pipeline(user)

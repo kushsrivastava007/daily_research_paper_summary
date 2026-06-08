@@ -206,13 +206,14 @@ async function runPipeline() {
   status.textContent = 'Fetching and processing papers...';
 
   try {
-    const res = await fetch('/run', { method: 'POST' });
+    const res = await fetch('/api/run', { method: 'POST' });
     const data = await res.json();
+    console.log('runPipeline response', res.status, data);
     if (data.status === 'success') {
-      status.textContent = `✓ Done — ${data.enriched} papers added`;
+      status.textContent = `✓ Done — ${data.papers} papers added`;
       setTimeout(() => location.reload(), 1500);
     } else {
-      status.textContent = '✗ Error: ' + data.message;
+      status.textContent = `✗ Error ${res.status}: ${data.message || 'unknown'}`;
     }
   } catch(e) {
     status.textContent = '✗ Failed to reach server';
