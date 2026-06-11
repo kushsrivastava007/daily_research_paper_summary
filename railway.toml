@@ -6,6 +6,6 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "sh -c 'uvicorn src.paper_digest.ui.app:app --host 0.0.0.0 --port $PORT'"
+startCommand = "sh -c 'uvicorn paper_digest.ui.app:app --host 0.0.0.0 --port $PORT'"
 healthcheckPath = "/"
 healthcheckTimeout = 30
