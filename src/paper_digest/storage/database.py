@@ -56,6 +56,17 @@ class User(Base):
     last_login      = Column(DateTime, nullable=True)
     is_active       = Column(Boolean, default=True)
 
+
+class TokenBlacklist(Base):
+    """Tracks revoked/blacklisted tokens on logout."""
+    __tablename__ = "token_blacklist"
+
+    id              = Column(String, primary_key=True)      # unique ID
+    token_hash      = Column(String, unique=True, nullable=False)  # hash of token
+    user_id         = Column(String, nullable=False)        # user who logged out
+    blacklisted_at  = Column(DateTime, default=datetime.utcnow)
+    expires_at      = Column(DateTime, nullable=False)      # when token naturally expires
+
     def to_dict(self):
         prefs = json.loads(self.preferences) if self.preferences else {}
         return {
@@ -225,3 +236,34 @@ def get_all_active_users() -> list[User]:
     """Get all active users for sending notifications."""
     with SessionLocal() as session:
         return session.query(User).filter_by(is_active=True).all()
+
+
+# ── Token Blacklist Management ───────────────────────────
+
+def add_token_to_blacklist(token_hash: str, user_id: str, expires_at: datetime) -> None:
+    """Add a token to the blacklist on logout."""
+    import uuid
+    with SessionLocal() as session:
+        blacklist_entry = TokenBlacklist(
+            id=str(uuid.uuid4()),
+            token_hash=token_hash,
+            user_id=user_id,
+            expires_at=expires_at,
+        )
+        session.add(blacklist_entry)
+        session.commit()
+
+
+def is_token_blacklisted(token_hash: str) -> bool:
+    """Check if a token has been blacklisted."""
+    with SessionLocal() as session:
+        # Also clean up expired entries
+        session.query(TokenBlacklist).filter(
+            TokenBlacklist.expires_at < datetime.utcnow()
+        ).delete()
+        session.commit()
+        
+        entry = session.query(TokenBlacklist).filter_by(
+            token_hash=token_hash
+        ).first()
+        return entry is not None
