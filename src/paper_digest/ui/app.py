@@ -60,6 +60,13 @@ async def startup_event():
 
 # ── Helper Functions ──────────────────────────────────────────
 
+def auth_context() -> dict:
+    """Common context flags for login buttons in index.html."""
+    return {
+        "google_login_enabled": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
+        "github_login_enabled": bool(settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET),
+    }
+
 def get_user_from_token(authorization: Annotated[Optional[str], Header()] = None) -> dict:
     """Extract user from Bearer token."""
     if not authorization:
@@ -108,11 +115,7 @@ async def home(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={
-            "papers": papers,
-            "google_login_enabled": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
-            "github_login_enabled": bool(settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET),
-        }
+        context={"papers": papers, **auth_context()}
     )
 
 
@@ -123,11 +126,7 @@ async def dashboard(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={
-            "papers": papers,
-            "google_login_enabled": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
-            "github_login_enabled": bool(settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET),
-        }
+        context={"papers": papers, **auth_context()}
     )
 
 
@@ -167,6 +166,7 @@ async def paper_detail(request: Request, paper_id: str):
             "selected": paper,
             "notes": notes,
             "quiz": quiz,
+            **auth_context(),
         }
     )
 
