@@ -24,4 +24,4 @@ RUN mkdir -p /app/data
 EXPOSE 8000
 
 # Run FastAPI app with Uvicorn
-CMD ["uvicorn", "src.paper_digest.ui.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "paper_digest.ui.app:app", "--host", "0.0.0.0", "--port", "8000"]
