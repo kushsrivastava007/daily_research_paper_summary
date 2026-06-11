@@ -1,603 +1,326 @@
-<!-- src/paper_digest/ui/templates/settings.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Paper Digest</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paper Digest</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f8f9fa; color: #1a1a1a; display: flex; height: 100vh; overflow: hidden; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+  /* Sidebar */
+  .sidebar { width: 300px; background: #fff; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+  .sidebar-header { padding: 16px; border-bottom: 1px solid #e5e7eb; }
+  .sidebar-header h1 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .run-btn { width: 100%; padding: 8px; background: #1a1a1a; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  .run-btn:hover { background: #333; }
+  .run-btn:disabled { background: #999; cursor: default; }
+  .paper-list { flex: 1; overflow-y: auto; }
+  .paper-item { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.1s; text-decoration: none; display: block; }
+  .paper-item:hover { background: #f8f9fa; }
+  .paper-item.active { background: #f0f4ff; border-left: 3px solid #3b5bdb; }
+  .paper-title { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; color: #1a1a1a; }
+  .paper-meta { font-size: 11px; color: #888; display: flex; gap: 8px; }
+  .score-badge { background: #f0fdf4; color: #166534; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
+  /* Main content */
+  .main { flex: 1; overflow-y: auto; padding: 32px; }
+  .empty-state { text-align: center; padding: 80px 0; color: #888; }
+  .empty-state h2 { font-size: 18px; margin-bottom: 8px; }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-        }
+  /* Paper detail */
+  .paper-header { margin-bottom: 24px; }
+  .paper-header h2 { font-size: 22px; font-weight: 600; line-height: 1.3; margin-bottom: 8px; }
+  .paper-header a { font-size: 13px; color: #3b5bdb; }
+  .paper-authors { font-size: 13px; color: #666; margin-top: 4px; }
 
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 24px; }
+  .tab { padding: 10px 20px; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; color: #666; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; font-weight: 500; }
 
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
+  /* Notes */
+  .tldr { background: #f0f4ff; border-left: 3px solid #3b5bdb; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14px; margin-bottom: 20px; line-height: 1.6; }
+  .section { margin-bottom: 20px; }
+  .section h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin-bottom: 8px; }
+  .section p { font-size: 14px; line-height: 1.7; color: #333; }
+  .concept { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+  .concept-term { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .concept-def { font-size: 13px; color: #555; line-height: 1.5; }
 
-        .content {
-            padding: 30px;
-        }
+  /* Quiz */
+  .question { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .question-text { font-size: 14px; font-weight: 500; margin-bottom: 12px; line-height: 1.5; }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option { padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: left; background: #fff; }
+  .option:hover { background: #f8f9fa; border-color: #999; }
+  .option.correct { background: #f0fdf4; border-color: #16a34a; color: #166534; }
+  .option.wrong { background: #fef2f2; border-color: #dc2626; color: #991b1b; }
+  .explanation { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 13px; color: #555; line-height: 1.5; display: none; }
 
-        .setting-group {
-            margin-bottom: 30px;
-        }
-
-        .setting-group h2 {
-            font-size: 18px;
-            color: #333;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .setting-item {
-            margin-bottom: 15px;
-        }
-
-        .setting-item label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
-            font-size: 14px;
-        }
-
-        .setting-item input[type="text"],
-        .setting-item input[type="email"],
-        .setting-item input[type="time"],
-        .setting-item select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-
-        .setting-item input[type="text"]:focus,
-        .setting-item input[type="email"]:focus,
-        .setting-item input[type="time"]:focus,
-        .setting-item select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .checkbox-group label {
-            margin: 0;
-            cursor: pointer;
-        }
-
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-        }
-
-        .category-checkbox {
-            display: flex;
-            align-items: center;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .category-checkbox:hover {
-            background-color: #f8f8f8;
-        }
-
-        .category-checkbox input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            margin-right: 8px;
-        }
-
-        .category-checkbox input[type="checkbox"]:checked {
-            accent-color: #667eea;
-        }
-
-        .status-message {
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .status-message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .status-message.loading {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-
-        button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-save {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-save:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-logout {
-            background: #f5f5f5;
-            color: #333;
-            border: 1px solid #ddd;
-        }
-
-        .btn-logout:hover {
-            background: #e5e5e5;
-        }
-
-        .nav-links {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #f0f0f0;
-        }
-
-        .nav-links a {
-            color: #667eea;
-            text-decoration: none;
-            margin: 0 15px;
-            font-size: 14px;
-        }
-
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-
-        .user-info {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
-        }
-
-        .user-info p {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #555;
-        }
-
-        .user-info strong {
-            color: #333;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                border-radius: 0;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .categories {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  .tag { display: inline-block; background: #f3f4f6; color: #555; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-right: 4px; }
+  #run-status { font-size: 12px; color: #888; margin-top: 6px; min-height: 16px; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>⚙️ Settings</h1>
-            <p>Configure your Paper Digest preferences</p>
-        </div>
 
-        <div class="content">
-            <div id="status-message"></div>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>📄 Paper Digest</h1>
+    <button class="run-btn" onclick="runPipeline()" id="run-btn" style="display:none">▶ Run pipeline</button>
+    {% if google_login_enabled %}
+    <button class="run-btn" onclick="loginWith('google')" id="login-google-btn" style="margin-top:8px">🔑 Login with Google</button>
+    {% endif %}
+    {% if github_login_enabled %}
+    <button class="run-btn" onclick="loginWith('github')" id="login-github-btn" style="margin-top:8px">🔑 Login with GitHub</button>
+    {% endif %}
+    <button class="run-btn" onclick="logout()" id="logout-btn" style="display:none; margin-top:8px">🔓 Logout</button>
+    <button class="run-btn" onclick="window.location.href='/settings'" id="settings-btn" style="display:none; margin-top:8px; background:#555">⚙️ Settings</button>
+    {% if not google_login_enabled and not github_login_enabled %}
+    <div style="margin-top:12px; font-size:12px; color:#b00;">
+      OAuth login is not configured. Set Google/GitHub client credentials in environment variables.
+    </div>
+    {% endif %}
+    <div id="run-status"></div>
+  </div>
+  <div class="paper-list">
+    {% for paper in papers %}
+    <a class="paper-item {% if selected and selected.id == paper.id %}active{% endif %}"
+       href="/paper/{{ paper.id }}">
+      <div class="paper-title">{{ paper.title[:80] }}{% if paper.title|length > 80 %}...{% endif %}</div>
+      <div class="paper-meta">
+        <span class="score-badge">★ {{ paper.score }}</span>
+        <span>{{ paper.published }}</span>
+      </div>
+    </a>
+    {% else %}
+    <div style="padding:20px; font-size:13px; color:#888; text-align:center;">
+      No papers yet.<br>Click "Run pipeline" to fetch.
+    </div>
+    {% endfor %}
+  </div>
+</div>
 
-            <!-- User Info -->
-            <div class="user-info" id="user-info" style="display: none;">
-                <p><strong>Email:</strong> <span id="user-email"></span></p>
-                <p><strong>Joined:</strong> <span id="user-date"></span></p>
-            </div>
+<div class="main">
+  {% if not selected %}
+  <div class="empty-state">
+    <h2>Select a paper to study</h2>
+    <p>Click any paper from the sidebar to read its notes and take the quiz.</p>
+  </div>
 
-            <!-- API Key Section -->
-            <div class="setting-group">
-                <h2>🔑 API Configuration</h2>
-                <div class="setting-item">
-                    <label for="groq-api-key">
-                        Groq API Key
-                        <span style="color: #999; font-weight: normal;">(required for paper analysis)</span>
-                    </label>
-                    <input 
-                        type="password" 
-                        id="groq-api-key" 
-                        placeholder="Enter your Groq API key"
-                        autocomplete="off"
-                    >
-                    <small style="color: #999; margin-top: 5px; display: block;">
-                        Get your key from <a href="https://console.groq.com" target="_blank" style="color: #667eea;">console.groq.com</a>
-                    </small>
-                </div>
-            </div>
+  {% else %}
+  <div class="paper-header">
+    <h2>{{ selected.title }}</h2>
+    <div class="paper-authors">{{ selected.authors }}</div>
+    <a href="{{ selected.url }}" target="_blank">View on arXiv ↗</a>
+  </div>
 
-            <!-- Email Preferences Section -->
-            <div class="setting-group">
-                <h2>📧 Email Notifications</h2>
-                
-                <div class="setting-item">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="receive-emails" checked>
-                        <label for="receive-emails">Receive daily paper digest emails</label>
-                    </div>
-                </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('notes', this)">📓 Notes</button>
+    <button class="tab" onclick="showTab('quiz', this)">❓ Quiz</button>
+    <button class="tab" onclick="showTab('abstract', this)">📄 Abstract</button>
+  </div>
 
-                <div class="setting-item" id="send-time-group">
-                    <label for="send-time">Preferred send time (UTC)</label>
-                    <input type="time" id="send-time" value="09:00">
-                </div>
-            </div>
+  <!-- Notes tab -->
+  <div id="tab-notes">
+    {% if notes %}
+    <div class="tldr">{{ notes.tldr }}</div>
 
-            <!-- Categories Section -->
-            <div class="setting-group">
-                <h2>🏷️ Research Categories</h2>
-                <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
-                    Select which arXiv categories interest you
-                </p>
-                <div class="categories">
-                    <label class="category-checkbox">
-                        <input type="checkbox" name="category" value="cs.AI" checked>
-                        AI
-                    </label>
-                    <label class="category-checkbox">
-                        <input type="checkbox" name="category" value="cs.LG" checked>
-                        Machine Learning
-                    </label>
-                    <label class="category-checkbox">
-                        <input type="checkbox" name="category" value="cs.CL" checked>
-                        NLP
-                    </label>
-                    <label class="category-checkbox">
-                        <input type="checkbox" name="category" value="cs.CV">
-                        Computer Vision
-                    </label>
-                    <label class="category-checkbox">
-                        <input type="checkbox" name="category" value="cs.IR">
-                        Information Retrieval
-                    </label>
-                    <label class="category-checkbox">
-                        <input type="checkbox" name="category" value="cs.MA">
-                        Multiagent Systems
-                    </label>
-                    <label class="category-checkbox">
-                        <input type="checkbox" name="category" value="cs.NE">
-                        Neural &amp; Evolutionary
-                    </label>
-                    <label class="category-checkbox">
-                        <input type="checkbox" name="category" value="cs.RO">
-                        Robotics
-                    </label>
-                    <label class="category-checkbox">
-                        <input type="checkbox" name="category" value="stat.ML">
-                        Statistics ML
-                    </label>
-                </div>
-                <div class="setting-item" style="margin-top: 15px;">
-                    <label for="custom-category-input">Custom arXiv categories</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="custom-category-input" placeholder="e.g. eess.SP, physics.optics, q-bio.NC" style="flex: 1;">
-                        <button onclick="addCustomCategory()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap;">+ Add</button>
-                    </div>
-                    <small style="color: #999; margin-top: 5px; display: block;">
-                        Enter any valid <a href="https://arxiv.org/category_taxonomy" target="_blank" style="color: #667eea;">arXiv category code</a> and press Add
-                    </small>
-                    <div id="custom-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;"></div>
-                </div>
-            </div>
-
-            <!-- Buttons -->
-            <div class="button-group">
-                <button class="btn-save" id="save-button" onclick="saveSettings()">
-                    💾 Save Changes
-                </button>
-                <button class="btn-logout" onclick="logout()">
-                    Logout
-                </button>
-            </div>
-
-            <!-- Navigation -->
-            <div class="nav-links">
-                <a href="/">← Back to Papers</a>
-            </div>
-        </div>
+    <div class="section">
+      <h3>Problem</h3>
+      <p>{{ notes.problem }}</p>
     </div>
 
-    <script>
-        // Get token from URL or localStorage
-        function getToken() {
-            const params = new URLSearchParams(window.location.search);
-            const token = params.get('token');
-            if (token) {
-                localStorage.setItem('token', token);
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
-            return localStorage.getItem('token');
-        }
+    <div class="section">
+      <h3>Solution</h3>
+      <p>{{ notes.solution }}</p>
+    </div>
 
-        // Make API request
-        async function apiRequest(method, endpoint, data = null) {
-            const token = getToken();
-            const options = {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            };
-            if (data) options.body = JSON.stringify(data);
+    <div class="section">
+      <h3>Why it matters to you</h3>
+      <p>{{ notes.practical_relevance }}</p>
+    </div>
 
-            const response = await fetch(`/api${endpoint}`, options);
-            if (!response.ok) {
-                if (response.status === 401) {
-                    showStatus('Session expired. Please login again.', 'error');
-                    setTimeout(() => window.location.href = '/', 2000);
-                    throw new Error('Unauthorized');
-                }
-                throw new Error(`HTTP ${response.status}`);
-            }
-            return response.json();
-        }
+    <div class="section">
+      <h3>Key concepts</h3>
+      {% for concept in notes.key_concepts %}
+      <div class="concept">
+        <div class="concept-term">{{ concept.term }}</div>
+        <div class="concept-def">{{ concept.definition }}</div>
+      </div>
+      {% endfor %}
+    </div>
 
-        // Show status message
-        function showStatus(message, type = 'success') {
-            const el = document.getElementById('status-message');
-            el.innerHTML = `<div class="status-message ${type}">${message}</div>`;
-            if (type !== 'error' && type !== 'loading') {
-                setTimeout(() => el.innerHTML = '', 3000);
-            }
-        }
+    <div class="section">
+      <h3>Further reading</h3>
+      {% for topic in notes.further_reading %}
+      <span class="tag">{{ topic }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
 
-        // Load user data
-        async function loadUser() {
-            try {
-                const user = await apiRequest('GET', '/user/me');
-                document.getElementById('user-email').textContent = user.email;
-                document.getElementById('user-info').style.display = 'block';
+  <!-- Quiz tab -->
+  <div id="tab-quiz" style="display:none">
+    {% if quiz and quiz.questions %}
+    {% for q in quiz.questions %}
+    <div class="question">
+      <div class="question-text">Q{{ loop.index }}. {{ q.question }}</div>
+      <div class="options">
+        {% for opt in q.options %}
+        <button class="option"
+          onclick="checkAnswer(this, {{ opt[0]|tojson }}, {{ q.answer|tojson }}, {{ (q.explanation or '')|tojson }})">
+          {{ opt }}
+        </button>
+        {% endfor %}
+      </div>
+      <div class="explanation" id="exp-{{ loop.index }}"></div>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
 
-                // Load preferences
-                const prefs = user.preferences;
-                document.getElementById('receive-emails').checked = prefs.receive_emails !== false;
-                document.getElementById('send-time').value = prefs.send_time || '09:00';
+  <!-- Abstract tab -->
+  <div id="tab-abstract" style="display:none">
+    <div class="section">
+      <p style="line-height:1.8">{{ selected.abstract }}</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
 
-                // Load categories
-                const categories = prefs.categories || ['cs.AI', 'cs.LG', 'cs.CL'];
-                const knownValues = Array.from(document.querySelectorAll('input[name="category"]')).map(cb => cb.value);
-                document.querySelectorAll('input[name="category"]').forEach(checkbox => {
-                    checkbox.checked = categories.includes(checkbox.value);
-                });
-                // Load custom categories (ones not in the checkbox list)
-                const customCats = categories.filter(c => !knownValues.includes(c));
-                customCats.forEach(cat => addCustomTag(cat));
-            } catch (error) {
-                showStatus('Failed to load user data', 'error');
-                console.error(error);
-            }
-        }
+<script>
+function showTab(name, btn) {
+  ['notes','quiz','abstract'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
 
-        // Save settings
-        async function saveSettings() {
-            const button = document.getElementById('save-button');
-            button.disabled = true;
-            showStatus('<span class="spinner"></span>Saving settings...', 'loading');
+function checkAnswer(btn, selected, correct, explanation) {
+  const options = btn.parentElement.querySelectorAll('.option');
+  options.forEach(o => {
+    o.disabled = true;
+    if (o.textContent.trim()[0] === correct) o.classList.add('correct');
+  });
+  if (selected !== correct) btn.classList.add('wrong');
 
-            try {
-                // Collect categories
-                const categories = Array.from(
-                    document.querySelectorAll('input[name="category"]:checked')
-                ).map(cb => cb.value);
+  const expDiv = btn.closest('.question').querySelector('.explanation');
+  expDiv.textContent = explanation;
+  expDiv.style.display = 'block';
+}
 
-                // Add custom categories
-                document.querySelectorAll('#custom-tags .custom-tag').forEach(tag => {
-                    const val = tag.dataset.value;
-                    if (val && !categories.includes(val)) categories.push(val);
-                });
+function getToken() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if (token) {
+    localStorage.setItem('token', token);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  return localStorage.getItem('token');
+}
 
-                // Save preferences
-                await apiRequest('PUT', '/user/preferences', {
-                    receive_emails: document.getElementById('receive-emails').checked,
-                    send_time: document.getElementById('send-time').value,
-                    categories: categories,
-                });
+function getAuthHeaders() {
+  const token = getToken();
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
 
-                // Save API key if changed
-                const apiKey = document.getElementById('groq-api-key').value;
-                if (apiKey) {
-                    await apiRequest('PUT', '/user/api-key', {
-                        groq_api_key: apiKey,
-                    });
-                }
+function loginWith(provider) {
+  window.location.href = `/auth/login/${provider}`;
+}
 
-                showStatus('✓ Settings saved successfully!', 'success');
-            } catch (error) {
-                showStatus('Failed to save settings', 'error');
-                console.error(error);
-            } finally {
-                button.disabled = false;
-            }
-        }
+function logout() {
+  const token = getToken();
+  if (!token) {
+    window.location.href = '/';
+    return;
+  }
+  fetch('/api/logout', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(() => {
+    localStorage.removeItem('token');
+    window.location.reload();
+  })
+  .catch(() => {
+    localStorage.removeItem('token');
+    window.location.reload();
+  });
+}
 
-        // Custom category tag management
-        function addCustomTag(value) {
-            const container = document.getElementById('custom-tags');
-            // Don't add duplicates
-            if (container.querySelector(`[data-value="${value}"]`)) return;
+function updateAuthButtons() {
+  const token = getToken();
+  const runBtn = document.getElementById('run-btn');
+  const googleBtn = document.getElementById('login-google-btn');
+  const githubBtn = document.getElementById('login-github-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  const settingsBtn = document.getElementById('settings-btn');
 
-            const tag = document.createElement('span');
-            tag.className = 'custom-tag';
-            tag.dataset.value = value;
-            tag.style.cssText = 'display:inline-flex; align-items:center; gap:4px; background:#f0f4ff; color:#333; padding:4px 10px; border-radius:12px; font-size:13px; border:1px solid #ddd;';
-            tag.innerHTML = `${value} <button onclick="this.parentElement.remove()" style="background:none; border:none; color:#999; cursor:pointer; font-size:16px; padding:0; line-height:1;">&times;</button>`;
-            container.appendChild(tag);
-        }
+  if (runBtn) runBtn.style.display = token ? 'block' : 'none';
+  if (googleBtn) googleBtn.style.display = token ? 'none' : 'block';
+  if (githubBtn) githubBtn.style.display = token ? 'none' : 'block';
+  if (logoutBtn) logoutBtn.style.display = token ? 'block' : 'none';
+  if (settingsBtn) settingsBtn.style.display = token ? 'block' : 'none';
+}
 
-        function addCustomCategory() {
-            const input = document.getElementById('custom-category-input');
-            const raw = input.value.trim();
-            if (!raw) return;
+async function runPipeline() {
+  const btn = document.getElementById('run-btn');
+  const status = document.getElementById('run-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running...';
+  status.textContent = 'Fetching and processing papers...';
 
-            // Support comma-separated input
-            const values = raw.split(',').map(v => v.trim()).filter(v => v);
-            const knownValues = Array.from(document.querySelectorAll('input[name="category"]')).map(cb => cb.value);
+  const token = getToken();
+  if (!token) {
+    status.textContent = '✗ Login required to run the pipeline. Please authenticate first.';
+    btn.disabled = false;
+    btn.textContent = '▶ Run pipeline';
+    return;
+  }
 
-            for (const val of values) {
-                // If it matches a checkbox, just check it instead
-                const checkbox = document.querySelector(`input[name="category"][value="${val}"]`);
-                if (checkbox) {
-                    checkbox.checked = true;
-                } else {
-                    addCustomTag(val);
-                }
-            }
-            input.value = '';
-        }
+  try {
+    const res = await fetch('/api/run', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    const data = await res.json().catch(() => null);
+    console.log('runPipeline response', res.status, data);
 
-        // Allow Enter key to add custom category
-        document.getElementById('custom-category-input').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); addCustomCategory(); }
-        });
+    if (!res.ok) {
+      const message = data?.message || data?.detail || 'unknown error';
+      status.textContent = `✗ Error ${res.status}: ${message}`;
+      if (res.status === 401) {
+        status.textContent += ' Please login again.';
+      }
+      return;
+    }
 
-        // Logout
-        function logout() {
-            const token = getToken();
-            if (!token) {
-                window.location.href = '/';
-                return;
-            }
-            fetch('/api/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(() => {
-                localStorage.removeItem('token');
-                window.location.href = '/';
-            })
-            .catch(() => {
-                localStorage.removeItem('token');
-                window.location.href = '/';
-            });
-        }
+    if (data.status === 'success') {
+      status.textContent = `✓ Done — ${data.papers} papers added`;
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      status.textContent = `✗ Error: ${data.message || 'unknown'}`;
+    }
+  } catch(e) {
+    status.textContent = '✗ Failed to reach server';
+    console.error(e);
+  }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            const token = getToken();
-            if (!token) {
-                showStatus('You are not logged in. <a href="/" style="color:#667eea; font-weight:600;">Go to home page to login</a>', 'error');
-                // Disable save button when not logged in
-                document.getElementById('save-button').disabled = true;
-                return;
-            }
-            loadUser();
-        });
+  btn.disabled = false;
+  btn.textContent = '▶ Run pipeline';
+}
 
-        // Toggle send time visibility
-        document.getElementById('receive-emails').addEventListener('change', (e) => {
-            document.getElementById('send-time-group').style.opacity = e.target.checked ? '1' : '0.5';
-            document.getElementById('send-time').disabled = !e.target.checked;
-        });
-    </script>
+document.addEventListener('DOMContentLoaded', () => {
+  updateAuthButtons();
+});
+</script>
 </body>
 </html>

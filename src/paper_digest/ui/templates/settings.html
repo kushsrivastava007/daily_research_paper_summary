@@ -333,7 +333,7 @@
             <div class="setting-group">
                 <h2>🏷️ Research Categories</h2>
                 <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
-                    Select which research categories interest you
+                    Select which arXiv categories interest you
                 </p>
                 <div class="categories">
                     <label class="category-checkbox">
@@ -349,6 +349,10 @@
                         NLP
                     </label>
                     <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="cs.CV">
+                        Computer Vision
+                    </label>
+                    <label class="category-checkbox">
                         <input type="checkbox" name="category" value="cs.IR">
                         Information Retrieval
                     </label>
@@ -357,9 +361,28 @@
                         Multiagent Systems
                     </label>
                     <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="cs.NE">
+                        Neural &amp; Evolutionary
+                    </label>
+                    <label class="category-checkbox">
+                        <input type="checkbox" name="category" value="cs.RO">
+                        Robotics
+                    </label>
+                    <label class="category-checkbox">
                         <input type="checkbox" name="category" value="stat.ML">
                         Statistics ML
                     </label>
+                </div>
+                <div class="setting-item" style="margin-top: 15px;">
+                    <label for="custom-category-input">Custom arXiv categories</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="custom-category-input" placeholder="e.g. eess.SP, physics.optics, q-bio.NC" style="flex: 1;">
+                        <button onclick="addCustomCategory()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap;">+ Add</button>
+                    </div>
+                    <small style="color: #999; margin-top: 5px; display: block;">
+                        Enter any valid <a href="https://arxiv.org/category_taxonomy" target="_blank" style="color: #667eea;">arXiv category code</a> and press Add
+                    </small>
+                    <div id="custom-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;"></div>
                 </div>
             </div>
 
@@ -439,9 +462,13 @@
 
                 // Load categories
                 const categories = prefs.categories || ['cs.AI', 'cs.LG', 'cs.CL'];
+                const knownValues = Array.from(document.querySelectorAll('input[name="category"]')).map(cb => cb.value);
                 document.querySelectorAll('input[name="category"]').forEach(checkbox => {
                     checkbox.checked = categories.includes(checkbox.value);
                 });
+                // Load custom categories (ones not in the checkbox list)
+                const customCats = categories.filter(c => !knownValues.includes(c));
+                customCats.forEach(cat => addCustomTag(cat));
             } catch (error) {
                 showStatus('Failed to load user data', 'error');
                 console.error(error);
@@ -459,6 +486,12 @@
                 const categories = Array.from(
                     document.querySelectorAll('input[name="category"]:checked')
                 ).map(cb => cb.value);
+
+                // Add custom categories
+                document.querySelectorAll('#custom-tags .custom-tag').forEach(tag => {
+                    const val = tag.dataset.value;
+                    if (val && !categories.includes(val)) categories.push(val);
+                });
 
                 // Save preferences
                 await apiRequest('PUT', '/user/preferences', {
@@ -483,6 +516,46 @@
                 button.disabled = false;
             }
         }
+
+        // Custom category tag management
+        function addCustomTag(value) {
+            const container = document.getElementById('custom-tags');
+            // Don't add duplicates
+            if (container.querySelector(`[data-value="${value}"]`)) return;
+
+            const tag = document.createElement('span');
+            tag.className = 'custom-tag';
+            tag.dataset.value = value;
+            tag.style.cssText = 'display:inline-flex; align-items:center; gap:4px; background:#f0f4ff; color:#333; padding:4px 10px; border-radius:12px; font-size:13px; border:1px solid #ddd;';
+            tag.innerHTML = `${value} <button onclick="this.parentElement.remove()" style="background:none; border:none; color:#999; cursor:pointer; font-size:16px; padding:0; line-height:1;">&times;</button>`;
+            container.appendChild(tag);
+        }
+
+        function addCustomCategory() {
+            const input = document.getElementById('custom-category-input');
+            const raw = input.value.trim();
+            if (!raw) return;
+
+            // Support comma-separated input
+            const values = raw.split(',').map(v => v.trim()).filter(v => v);
+            const knownValues = Array.from(document.querySelectorAll('input[name="category"]')).map(cb => cb.value);
+
+            for (const val of values) {
+                // If it matches a checkbox, just check it instead
+                const checkbox = document.querySelector(`input[name="category"][value="${val}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                } else {
+                    addCustomTag(val);
+                }
+            }
+            input.value = '';
+        }
+
+        // Allow Enter key to add custom category
+        document.getElementById('custom-category-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); addCustomCategory(); }
+        });
 
         // Logout
         function logout() {
