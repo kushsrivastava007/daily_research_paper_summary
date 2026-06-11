@@ -67,14 +67,15 @@
 <div class="sidebar">
   <div class="sidebar-header">
     <h1>📄 Paper Digest</h1>
-    <button class="run-btn" onclick="runPipeline()" id="run-btn">▶ Run pipeline</button>
+    <button class="run-btn" onclick="runPipeline()" id="run-btn" style="display:none">▶ Run pipeline</button>
     {% if google_login_enabled %}
-    <button class="run-btn" onclick="loginWith('google')" id="login-google-btn">Login with Google</button>
+    <button class="run-btn" onclick="loginWith('google')" id="login-google-btn" style="margin-top:8px">🔑 Login with Google</button>
     {% endif %}
     {% if github_login_enabled %}
-    <button class="run-btn" onclick="loginWith('github')" id="login-github-btn">Login with GitHub</button>
+    <button class="run-btn" onclick="loginWith('github')" id="login-github-btn" style="margin-top:8px">🔑 Login with GitHub</button>
     {% endif %}
-    <button class="run-btn" onclick="logout()" id="logout-btn" style="display:none">🔓 Logout</button>
+    <button class="run-btn" onclick="logout()" id="logout-btn" style="display:none; margin-top:8px">🔓 Logout</button>
+    <button class="run-btn" onclick="window.location.href='/settings'" id="settings-btn" style="display:none; margin-top:8px; background:#555">⚙️ Settings</button>
     {% if not google_login_enabled and not github_login_enabled %}
     <div style="margin-top:12px; font-size:12px; color:#b00;">
       OAuth login is not configured. Set Google/GitHub client credentials in environment variables.
@@ -254,13 +255,17 @@ function logout() {
 
 function updateAuthButtons() {
   const token = getToken();
+  const runBtn = document.getElementById('run-btn');
   const googleBtn = document.getElementById('login-google-btn');
   const githubBtn = document.getElementById('login-github-btn');
   const logoutBtn = document.getElementById('logout-btn');
+  const settingsBtn = document.getElementById('settings-btn');
 
+  if (runBtn) runBtn.style.display = token ? 'block' : 'none';
   if (googleBtn) googleBtn.style.display = token ? 'none' : 'block';
   if (githubBtn) githubBtn.style.display = token ? 'none' : 'block';
   if (logoutBtn) logoutBtn.style.display = token ? 'block' : 'none';
+  if (settingsBtn) settingsBtn.style.display = token ? 'block' : 'none';
 }
 
 async function runPipeline() {

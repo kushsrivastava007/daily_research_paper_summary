@@ -512,7 +512,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             const token = getToken();
             if (!token) {
-                window.location.href = '/';
+                showStatus('You are not logged in. <a href="/" style="color:#667eea; font-weight:600;">Go to home page to login</a>', 'error');
+                // Disable save button when not logged in
+                document.getElementById('save-button').disabled = true;
                 return;
             }
             loadUser();

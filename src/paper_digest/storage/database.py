@@ -56,6 +56,15 @@ class User(Base):
     last_login      = Column(DateTime, nullable=True)
     is_active       = Column(Boolean, default=True)
 
+    def to_dict(self):
+        prefs = json.loads(self.preferences) if self.preferences else {}
+        return {
+            "id": self.id,
+            "email": self.email,
+            "oauth_provider": self.oauth_provider,
+            "preferences": prefs,
+        }
+
 
 class TokenBlacklist(Base):
     """Tracks revoked/blacklisted tokens on logout."""
@@ -66,15 +75,6 @@ class TokenBlacklist(Base):
     user_id         = Column(String, nullable=False)        # user who logged out
     blacklisted_at  = Column(DateTime, default=datetime.utcnow)
     expires_at      = Column(DateTime, nullable=False)      # when token naturally expires
-
-    def to_dict(self):
-        prefs = json.loads(self.preferences) if self.preferences else {}
-        return {
-            "id": self.id,
-            "email": self.email,
-            "oauth_provider": self.oauth_provider,
-            "preferences": prefs,
-        }
 
 
 # ── Setup ─────────────────────────────────────────────────────
