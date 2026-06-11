@@ -64,8 +64,14 @@
 </head>
 <body>
 
-<!-- Login overlay - shown when not authenticated -->
-<div id="login-overlay" style="display:flex; position:fixed; inset:0; z-index:100; background:#f8f9fa; align-items:center; justify-content:center;">
+<!-- Login overlay - hidden by default if token exists; shown after auth check fails -->
+<div id="login-overlay" style="display:none; position:fixed; inset:0; z-index:100; background:#f8f9fa; align-items:center; justify-content:center;">
+<script>
+  // Synchronously show overlay ONLY if no token exists (avoids flash for logged-in users)
+  if (!localStorage.getItem('token')) {
+    document.getElementById('login-overlay').style.display = 'flex';
+  }
+</script>
   <div style="text-align:center; max-width:400px; padding:40px;">
     <h1 style="font-size:28px; margin-bottom:8px;">📄 Paper Digest</h1>
     <p style="color:#666; margin-bottom:24px;">AI-powered research paper discovery and learning platform</p>
