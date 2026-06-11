@@ -306,8 +306,12 @@ async def trigger_pipeline(user: dict = Depends(get_user_from_token)):
             detail="Groq API key not configured. Please add it in settings."
         )
 
+    # Get user's preferred categories
+    prefs = json.loads(user.preferences) if user.preferences else {}
+    categories = prefs.get("categories", ["cs.AI", "cs.LG", "cs.CL"])
+
     try:
-        state = run_pipeline()
+        state = run_pipeline(categories=categories)
         return {
             "status": "success",
             "papers": len(state.get("enriched_papers", [])),

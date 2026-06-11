@@ -4,7 +4,7 @@ import arxiv
 from datetime import datetime, timedelta
 from paper_digest.graph.state import Paper
 
-CATEGORIES = ["cs.AI", "cs.LG", "cs.CL", "cs.IR", "cs.MA"]
+CATEGORIES = ["cs.AI", "cs.LG", "cs.CL", "cs.CV", "cs.IR", "cs.MA", "cs.NE", "cs.RO", "stat.ML"]
 
 
 def safe_fetch(client, search, max_retries: int = 5) -> list:
