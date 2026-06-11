@@ -95,12 +95,27 @@ async def home(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"papers": papers}
+        context={
+            "papers": papers,
+            "google_login_enabled": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
+            "github_login_enabled": bool(settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET),
+        }
     )
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
+    """User dashboard - redirects to index with auth."""
+    papers = get_all_papers()
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "papers": papers,
+            "google_login_enabled": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
+            "github_login_enabled": bool(settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET),
+        }
+    )
     """User dashboard - redirects to index with auth."""
     papers = get_all_papers()
     return templates.TemplateResponse(
@@ -150,8 +165,22 @@ async def login(provider: str, request: Request):
     if provider not in ["google", "github"]:
         return JSONResponse({"error": "Invalid provider"}, status_code=400)
 
-    redirect_uri = request.url_for("auth_callback", provider=provider)
-    return await oauth.create_client(provider).authorize_redirect(
+    try:
+        client = oauth.create_client(provider)
+    except Exception as e:
+        return JSONResponse(
+            {"error": f"OAuth provider not configured: {str(e)}"},
+            status_code=500,
+        )
+
+    if client is None:
+        return JSONResponse(
+            {"error": f"OAuth provider '{provider}' is not configured."},
+            status_code=500,
+        )
+
+    redirect_uri = f"{settings.APP_URL}/auth/callback/{provider}"
+    return await client.authorize_redirect(
         request,
         redirect_uri,
     )

@@ -68,9 +68,18 @@
   <div class="sidebar-header">
     <h1>📄 Paper Digest</h1>
     <button class="run-btn" onclick="runPipeline()" id="run-btn">▶ Run pipeline</button>
+    {% if google_login_enabled %}
     <button class="run-btn" onclick="loginWith('google')" id="login-google-btn">Login with Google</button>
+    {% endif %}
+    {% if github_login_enabled %}
     <button class="run-btn" onclick="loginWith('github')" id="login-github-btn">Login with GitHub</button>
+    {% endif %}
     <button class="run-btn" onclick="logout()" id="logout-btn" style="display:none">🔓 Logout</button>
+    {% if not google_login_enabled and not github_login_enabled %}
+    <div style="margin-top:12px; font-size:12px; color:#b00;">
+      OAuth login is not configured. Set Google/GitHub client credentials in environment variables.
+    </div>
+    {% endif %}
     <div id="run-status"></div>
   </div>
   <div class="paper-list">
