@@ -7,6 +7,18 @@ from paper_digest.storage.database import (
     get_all_active_users,
 )
 from paper_digest.notifications.email import send_digest_email
+from paper_digest.graph.pipeline import run_pipeline
+
+
+def run_pipeline_and_send_digest():
+    """Run the paper-fetching pipeline, then send the daily digest email."""
+    print(f"[{datetime.utcnow().isoformat()}] Running pipeline before digest...")
+    try:
+        run_pipeline()
+    except Exception as e:
+        print(f"Error running pipeline: {e}")
+
+    send_daily_digest()
 
 
 def send_daily_digest():
@@ -74,13 +86,13 @@ def start_scheduler(scheduler_config: dict = None):
 
     # Schedule daily digest
     scheduler.add_job(
-        send_daily_digest,
+        run_pipeline_and_send_digest,
         "cron",
         hour=scheduler_config.get("hour", 9),
         minute=scheduler_config.get("minute", 0),
         timezone=scheduler_config.get("timezone", "UTC"),
         id="daily_digest",
-        name="Send daily paper digest",
+        name="Run pipeline and send daily paper digest",
     )
 
     scheduler.start()

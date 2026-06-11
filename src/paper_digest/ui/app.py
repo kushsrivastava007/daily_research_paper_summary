@@ -1,4 +1,5 @@
 # src/paper_digest/ui/app.py
+import os
 import json
 from fastapi import FastAPI, Request, Depends, HTTPException, Header
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -16,6 +17,7 @@ from paper_digest.storage.database import (
     get_user_by_email,
     update_user_preferences,
     update_user_api_key,
+    get_user_groq_api_key,
 )
 from paper_digest.graph.pipeline import run_pipeline
 from paper_digest.auth.oauth import oauth, handle_oauth_callback, get_current_user_id, create_access_token
@@ -142,8 +144,16 @@ async def paper_detail(request: Request, paper_id: str):
     if not paper:
         return HTMLResponse("Paper not found", status_code=404)
 
-    notes = json.loads(paper.notes) if paper.notes else {}
-    quiz = json.loads(paper.quiz) if paper.quiz else {}
+    def safe_json(value):
+        if not value:
+            return {}
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return {}
+
+    notes = safe_json(paper.notes)
+    quiz = safe_json(paper.quiz)
 
     return templates.TemplateResponse(
         request=request,
@@ -255,7 +265,7 @@ async def set_api_key(
 @app.post("/api/run")
 async def trigger_pipeline(user: dict = Depends(get_user_from_token)):
     """Trigger paper pipeline."""
-    if not user.groq_api_key:
+    if not get_user_groq_api_key(user.id) and not os.getenv("GROQ_API_KEY"):
         raise HTTPException(
             status_code=400,
             detail="Groq API key not configured. Please add it in settings."

@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
+from paper_digest.storage.crypto import encrypt_value, decrypt_value
 
 # SQLite file lives in data/ folder at project root
 DATABASE_URL = "sqlite:///data/papers.db"
@@ -152,13 +153,14 @@ def create_or_update_user(
     groq_api_key: str = None,
 ) -> User:
     """Create new user or update existing one with OAuth info."""
+    encrypted_key = encrypt_value(groq_api_key) if groq_api_key else groq_api_key
     with SessionLocal() as session:
         user = session.query(User).filter_by(email=email).first()
 
         if user:
             user.last_login = datetime.utcnow()
-            if groq_api_key:
-                user.groq_api_key = groq_api_key
+            if encrypted_key:
+                user.groq_api_key = encrypted_key
         else:
             import uuid
             user = User(
@@ -166,7 +168,7 @@ def create_or_update_user(
                 email=email,
                 oauth_provider=oauth_provider,
                 oauth_id=oauth_id,
-                groq_api_key=groq_api_key,
+                groq_api_key=encrypted_key,
                 preferences=json.dumps({
                     "receive_emails": True,
                     "categories": ["cs.AI", "cs.LG", "cs.CL"],
@@ -201,13 +203,22 @@ def update_user_preferences(user_id: str, preferences: dict) -> User:
 
 
 def update_user_api_key(user_id: str, groq_api_key: str) -> User:
-    """Update user's Groq API key (should be encrypted)."""
+    """Update user's Groq API key (stored encrypted)."""
     with SessionLocal() as session:
         user = session.get(User, user_id)
         if user:
-            user.groq_api_key = groq_api_key
+            user.groq_api_key = encrypt_value(groq_api_key)
             session.commit()
         return user
+
+
+def get_user_groq_api_key(user_id: str) -> str | None:
+    """Retrieve a user's Groq API key, decrypted."""
+    with SessionLocal() as session:
+        user = session.get(User, user_id)
+        if user and user.groq_api_key:
+            return decrypt_value(user.groq_api_key)
+        return None
 
 
 def get_all_active_users() -> list[User]:
