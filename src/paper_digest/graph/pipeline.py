@@ -67,7 +67,8 @@ def notebook_node(state: PipelineState) -> PipelineState:
     """Generate study notes for each selected paper."""
     print("📓 Generating study notes...")
     try:
-        enriched = generate_notes_for_papers(state["selected_papers"])
+        categories = state.get("categories") or None
+        enriched = generate_notes_for_papers(state["selected_papers"], categories=categories)
         print(f"   Generated notes for {len(enriched)} papers")
         return {**state, "enriched_papers": enriched}
     except Exception as e:

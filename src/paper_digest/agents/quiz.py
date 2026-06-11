@@ -1,5 +1,6 @@
 # src/paper_digest/agents/quiz.py
 import json
+import re
 from paper_digest.graph.state import Paper
 from paper_digest.llm import call_llm
 
@@ -45,7 +46,14 @@ Notes: {paper.notes or ''}
         quiz = json.loads(response.strip())
         paper.quiz = json.dumps(quiz, indent=2)
     except json.JSONDecodeError:
-        paper.quiz = response
+        # LLM may wrap JSON in markdown code fences — strip them
+        cleaned = re.sub(r'^```(?:json)?\s*', '', response.strip())
+        cleaned = re.sub(r'\s*```$', '', cleaned)
+        try:
+            quiz = json.loads(cleaned.strip())
+            paper.quiz = json.dumps(quiz, indent=2)
+        except json.JSONDecodeError:
+            paper.quiz = json.dumps({"questions": []})  # empty but valid
 
     return paper
 
