@@ -23,6 +23,8 @@ Rules:
 - Increase difficulty: question 1 is easy, question 2 is medium, question 3 is hard
 - Questions must test actual understanding, not just memory
 - Wrong options must be plausible, not obviously wrong
+- Each option MUST start with a letter and parenthesis: "A) ...", "B) ...", "C) ...", "D) ..."
+- The "answer" field MUST be a single uppercase letter: "A", "B", "C", or "D"
 - Respond with ONLY the JSON object. No markdown, no backticks.
 """
 

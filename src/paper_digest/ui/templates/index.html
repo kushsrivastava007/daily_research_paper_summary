@@ -207,12 +207,17 @@ function showTab(name, btn) {
 }
 
 function checkAnswer(btn, selected, correct, explanation) {
+  // Normalize: extract just the letter (A/B/C/D) from the answer
+  const correctLetter = correct.trim().charAt(0).toUpperCase();
+  const selectedLetter = selected.trim().charAt(0).toUpperCase();
+
   const options = btn.parentElement.querySelectorAll('.option');
   options.forEach(o => {
     o.disabled = true;
-    if (o.textContent.trim()[0] === correct) o.classList.add('correct');
+    const optLetter = o.textContent.trim().charAt(0).toUpperCase();
+    if (optLetter === correctLetter) o.classList.add('correct');
   });
-  if (selected !== correct) btn.classList.add('wrong');
+  if (selectedLetter !== correctLetter) btn.classList.add('wrong');
 
   const expDiv = btn.closest('.question').querySelector('.explanation');
   expDiv.textContent = explanation;
