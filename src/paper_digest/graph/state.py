@@ -25,3 +25,4 @@ class PipelineState(TypedDict):
     enriched_papers: list[Paper]    # notebook + quiz output
     run_date: str
     errors: list[str]
+    categories: list[str]           # user-selected arXiv categories

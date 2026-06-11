@@ -14,7 +14,17 @@ def run_pipeline_and_send_digest():
     """Run the paper-fetching pipeline, then send the daily digest email."""
     print(f"[{datetime.utcnow().isoformat()}] Running pipeline before digest...")
     try:
-        run_pipeline()
+        # Collect all unique categories from active users
+        users = get_all_active_users()
+        all_categories = set()
+        for user in users:
+            if user.preferences:
+                prefs = json.loads(user.preferences)
+                cats = prefs.get("categories", [])
+                all_categories.update(cats)
+
+        categories = list(all_categories) if all_categories else None
+        run_pipeline(categories=categories)
     except Exception as e:
         print(f"Error running pipeline: {e}")
 

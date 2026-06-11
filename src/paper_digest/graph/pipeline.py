@@ -23,8 +23,9 @@ def fetcher_node(state: PipelineState) -> PipelineState:
     """Fetch latest papers from arXiv."""
     print("📡 Fetching papers from arXiv...")
     try:
-        papers = fetch_papers(max_results=10, days_back=7)
-        print(f"   Fetched {len(papers)} papers")
+        categories = state.get("categories") or None
+        papers = fetch_papers(categories=categories, max_results=10, days_back=7) if categories else fetch_papers(max_results=10, days_back=7)
+        print(f"   Fetched {len(papers)} papers (categories: {categories or 'default'})")
         return {**state, "raw_papers": papers}
     except Exception as e:
         print(f"   Error: {e}")
@@ -152,7 +153,7 @@ def build_graph() -> StateGraph:
 
 # ── Entry point ───────────────────────────────────────────────
 
-def run_pipeline() -> PipelineState:
+def run_pipeline(categories: list[str] = None) -> PipelineState:
     init_db()
 
     initial_state: PipelineState = {
@@ -162,6 +163,7 @@ def run_pipeline() -> PipelineState:
         "enriched_papers": [],
         "run_date":        datetime.now().strftime("%Y-%m-%d"),
         "errors":          [],
+        "categories":      categories or [],
     }
 
     print(f"\n🚀 Starting pipeline — {initial_state['run_date']}\n")
