@@ -36,7 +36,8 @@ def ranker_node(state: PipelineState) -> PipelineState:
     """Score each paper for relevance."""
     print("⭐ Ranking papers...")
     try:
-        ranked = rank_papers(state["raw_papers"])
+        categories = state.get("categories") or None
+        ranked = rank_papers(state["raw_papers"], categories=categories)
         print(f"   Ranked {len(ranked)} papers")
         for p in ranked[:3]:
             print(f"   [{p.score}] {p.title[:60]}...")
