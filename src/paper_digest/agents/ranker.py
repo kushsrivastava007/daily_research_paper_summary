@@ -1,5 +1,6 @@
 # src/paper_digest/agents/ranker.py
 import json
+import re
 import time
 from paper_digest.graph.state import Paper
 from paper_digest.llm import call_llm
@@ -43,15 +44,23 @@ def build_system_prompt(categories: list[str] | None = None) -> str:
 
     if is_ai_focused:
         domain_guidance = """
-Additional context — the user is an AI/ML practitioner. Prioritize papers that are:
-- Practical and applicable: RAG pipelines, LLM agents, agentic workflows, fine-tuning techniques
-- Framework/tooling oriented: LangChain, LangGraph, vLLM, orchestration patterns
-- Systems-level: MLOps, LLM serving, observability, evaluation, guardrails
-- Applied over theoretical: real-world benchmarks, deployment insights, engineering trade-offs
-- Novel architectures or techniques with clear practical impact
+Additional context — the user is an AI engineer focused on agentic AI and generative AI.
+Prioritize papers that are:
+- Agentic AI: autonomous agents, multi-agent systems, tool-use, planning, reasoning,
+  agent orchestration, reflection loops, memory architectures for agents
+- AI Engineering & Infrastructure: RAG pipelines, LLM serving (vLLM, TGI, SGLang),
+  LangChain, LangGraph, CrewAI, AutoGen, orchestration patterns, prompt engineering,
+  structured output, function calling, guardrails, evaluation frameworks
+- Generative AI: large language models, diffusion models, multimodal generation,
+  text-to-image/video/code, foundation models, RLHF, DPO, alignment techniques
+- Emerging & Next-gen: MCP (Model Context Protocol), AI coding assistants,
+  retrieval-augmented generation advances, mixture-of-experts, small language models,
+  on-device AI, edge inference, model compression, speculative decoding
+- Applied & Production: fine-tuning (LoRA, QLoRA), MLOps, deployment patterns,
+  real-world benchmarks, cost optimization, latency trade-offs, observability
 
-Deprioritize papers that are purely mathematical proofs or narrow domain theory 
-with no engineering relevance."""
+Deprioritize papers that are purely mathematical proofs, narrow domain theory
+with no engineering relevance, or incremental benchmark improvements."""
     else:
         domain_guidance = """
 Focus on papers that present novel results, practical methods, or significant 
@@ -91,7 +100,14 @@ Abstract: {paper.abstract[:500]}
         data = json.loads(response.strip())
         paper.score = float(data["score"])
     except (json.JSONDecodeError, KeyError, ValueError):
-        paper.score = 5.0
+        # LLM may wrap JSON in markdown code fences
+        cleaned = re.sub(r'^```(?:json)?\s*', '', response.strip())
+        cleaned = re.sub(r'\s*```$', '', cleaned)
+        try:
+            data = json.loads(cleaned.strip())
+            paper.score = float(data["score"])
+        except (json.JSONDecodeError, KeyError, ValueError):
+            paper.score = 5.0
 
     return paper
 

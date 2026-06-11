@@ -4,23 +4,25 @@ An LLM-powered research paper discovery and learning platform. Get daily persona
 
 ## ✨ Features
 
-- 🔐 **OAuth Authentication** - Sign in with Google or GitHub
-- 📧 **Daily Email Digests** - Automatic summaries of relevant papers
-- 🤖 **AI-Powered Ranking** - Papers scored for relevance using Groq LLMs
-- 📝 **Learning Notes** - Auto-generated summaries and learning guides
-- 🎓 **Quiz Generation** - Test yourself with AI-generated quizzes
-- ⚙️ **Customizable Settings** - Choose research categories, email times, preferences
-- 🚀 **Production Ready** - Easy deployment to Railway, Render, or self-hosted
+- 🔐 **OAuth Authentication** — Sign in with Google or GitHub, JWT-based sessions with token blacklist for secure logout
+- 🎯 **Personalized Categories** — Choose from 9 preset arXiv categories (cs.AI, cs.LG, cs.CL, cs.CV, etc.) or add custom ones
+- 🤖 **Dynamic AI-Powered Ranking** — Papers scored 1-10 using category-aware prompts; AI/ML users get prompts tuned for agentic AI, generative AI, AI engineering, and emerging tech (MCP, mixture-of-experts, speculative decoding, etc.)
+- 📝 **Adaptive Study Notes** — Auto-generated notes with practical relevance tailored to your research interests
+- 🎓 **Quiz Generation** — Test understanding with AI-generated multiple-choice quizzes
+- ⚙️ **Settings Page** — Configure categories, email preferences, and Groq API key
+- 📧 **Daily Email Digests** — Automatic summaries of relevant papers
+- 🚀 **Production Ready** — Easy deployment to Railway, Render, or self-hosted
 
 ## 🎯 How It Works
 
 ```
-1. Fetch    → Retrieves latest papers from arXiv (AI/ML/NLP categories)
-2. Rank     → Scores papers 1-10 for relevance to AI engineering
+1. Fetch    → Retrieves latest papers from arXiv using the user's selected categories
+2. Rank     → Scores papers 1-10 with category-aware prompts (agentic AI, GenAI, AI engineering focus for AI users)
 3. Curate   → Selects top papers, skips duplicates from previous runs
-4. Enrich   → Generates learning notes and quizzes using LLMs
-5. Store    → Saves everything to SQLite
-6. Notify   → Sends daily email digest to subscribed users
+4. Notebook → Generates structured study notes with practical relevance tailored to the user's interests
+5. Quiz     → Creates multiple-choice quizzes to test understanding
+6. Store    → Saves everything to SQLite
+7. Notify   → Sends daily email digest to subscribed users
 ```
 
 ## 🚀 Quick Start
@@ -145,16 +147,18 @@ Papers
 ### API Endpoints
 
 **Public:**
-- `GET /` - Home page
-- `GET /auth/login/{provider}` - OAuth login
-- `GET /auth/callback/{provider}` - OAuth callback
-- `GET /auth/logout` - Logout
+- `GET /` — Home page (login overlay if unauthenticated)
+- `GET /paper/{id}` — Paper detail with notes, quiz, and abstract tabs
+- `GET /settings` — Settings page for categories and preferences
+- `GET /auth/login/{provider}` — OAuth login (Google or GitHub)
+- `GET /auth/callback/{provider}` — OAuth callback
 
 **Authenticated:**
-- `GET /api/user/me` - Get user profile
-- `PUT /api/user/preferences` - Update preferences
-- `PUT /api/user/api-key` - Set Groq API key
-- `POST /api/run` - Trigger paper pipeline
+- `GET /api/user/me` — Get user profile and preferences
+- `PUT /api/user/preferences` — Update categories and preferences
+- `PUT /api/user/api-key` — Set Groq API key
+- `POST /api/run` — Trigger paper pipeline (uses user's selected categories)
+- `POST /api/logout` — Logout (blacklists JWT token)
 
 ## 🔧 Configuration
 
@@ -181,7 +185,7 @@ GROQ_API_KEY=... # Default for global runs
 
 ### Email Digest Timing
 
-Emails sent daily at **9:00 AM UTC** by default.
+Emails sent daily at **8:00 AM IST** (2:30 AM UTC) by default.
 
 Edit `src/paper_digest/scheduler/tasks.py` to customize.
 

@@ -60,6 +60,7 @@ def fetch_papers(
             authors=[a.name for a in result.authors],
             published=result.published.strftime("%Y-%m-%d"),
             url=result.entry_id,
+            paper_categories=list(result.categories),
         ))
 
     return papers

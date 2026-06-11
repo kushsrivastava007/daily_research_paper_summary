@@ -14,6 +14,7 @@ class Paper(BaseModel):
     notes: Optional[str] = None         # filled by notebook agent
     quiz: Optional[str] = None          # filled by quiz agent
     summary: Optional[str] = None       # filled by notifier
+    paper_categories: list[str] = Field(default_factory=list)  # arXiv categories this paper belongs to
 
     model_config = {"arbitrary_types_allowed": True}
 

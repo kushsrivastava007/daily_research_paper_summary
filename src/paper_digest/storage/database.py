@@ -38,6 +38,7 @@ class PaperRecord(Base):
     score       = Column(Float,  nullable=True)
     notes       = Column(Text,   nullable=True)      # JSON string
     quiz        = Column(Text,   nullable=True)      # JSON string
+    paper_categories = Column(Text, nullable=True)    # JSON list of arXiv categories
     seen        = Column(Boolean, default=True)
     created_at  = Column(DateTime, default=datetime.utcnow)
 
@@ -80,10 +81,18 @@ class TokenBlacklist(Base):
 # ── Setup ─────────────────────────────────────────────────────
 
 def init_db():
-    """Create tables if they don't exist."""
+    """Create tables if they don't exist, and migrate new columns."""
     import os
     os.makedirs("data", exist_ok=True)
     Base.metadata.create_all(engine)
+
+    # Migrate: add paper_categories column if it doesn't exist (for existing DBs)
+    from sqlalchemy import inspect, text
+    insp = inspect(engine)
+    columns = [c["name"] for c in insp.get_columns("papers")]
+    if "paper_categories" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE papers ADD COLUMN paper_categories TEXT"))
 
 
 # ── Write operations ──────────────────────────────────────────
@@ -98,6 +107,7 @@ def save_paper(paper) -> None:
             record.score = paper.score
             record.notes = paper.notes
             record.quiz  = paper.quiz
+            record.paper_categories = json.dumps(getattr(paper, 'paper_categories', []))
         else:
             # insert new record
             record = PaperRecord(
@@ -110,6 +120,7 @@ def save_paper(paper) -> None:
                 score     = paper.score,
                 notes     = paper.notes,
                 quiz      = paper.quiz,
+                paper_categories = json.dumps(getattr(paper, 'paper_categories', [])),
             )
             session.add(record)
 

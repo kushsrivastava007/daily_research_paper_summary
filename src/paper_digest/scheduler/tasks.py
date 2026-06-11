@@ -42,6 +42,12 @@ def send_daily_digest():
         # Convert papers to dicts for JSON serialization
         papers_data = []
         for paper in papers[:20]:  # Limit to last 20 papers
+            paper_cats = []
+            if paper.paper_categories:
+                try:
+                    paper_cats = json.loads(paper.paper_categories)
+                except (json.JSONDecodeError, TypeError):
+                    paper_cats = []
             papers_data.append({
                 "id": paper.id,
                 "title": paper.title,
@@ -50,6 +56,7 @@ def send_daily_digest():
                 "url": paper.url,
                 "score": paper.score,
                 "published": paper.published,
+                "paper_categories": paper_cats,
             })
 
         for user in users:
@@ -62,11 +69,23 @@ def send_daily_digest():
             if not prefs.get("receive_emails", True):
                 continue
 
-            # Filter papers by categories (optional)
-            # For now, send all papers
+            # Filter papers to only those matching user's selected categories
+            user_cats = set(prefs.get("categories", []))
+            if user_cats:
+                user_papers = [
+                    p for p in papers_data
+                    if user_cats & set(p.get("paper_categories", []))
+                ]
+            else:
+                user_papers = papers_data  # no preference = send all
+
+            if not user_papers:
+                print(f"⏭ No matching papers for {user.email}, skipping")
+                continue
+
             success = send_digest_email(
                 recipient_email=user.email,
-                papers=papers_data,
+                papers=user_papers,
                 user_name=user.email.split("@")[0],
             )
 
@@ -84,12 +103,12 @@ def send_daily_digest():
 def start_scheduler(scheduler_config: dict = None):
     """Start background scheduler for recurring tasks."""
 
-    # Default config: send digest every day at 9 AM UTC
+    # Default config: send digest every day at 00:05 AM IST (for testing)
     if scheduler_config is None:
         scheduler_config = {
-            "hour": 9,
-            "minute": 0,
-            "timezone": "UTC",
+            "hour": 0,
+            "minute": 5,
+            "timezone": "Asia/Kolkata",
         }
 
     scheduler = BackgroundScheduler()
@@ -98,17 +117,18 @@ def start_scheduler(scheduler_config: dict = None):
     scheduler.add_job(
         run_pipeline_and_send_digest,
         "cron",
-        hour=scheduler_config.get("hour", 9),
-        minute=scheduler_config.get("minute", 0),
-        timezone=scheduler_config.get("timezone", "UTC"),
+        hour=scheduler_config.get("hour", 0),
+        minute=scheduler_config.get("minute", 5),
+        timezone=scheduler_config.get("timezone", "Asia/Kolkata"),
         id="daily_digest",
         name="Run pipeline and send daily paper digest",
     )
 
     scheduler.start()
-    print("✓ Scheduler started - Daily digest at {}:{}".format(
-        scheduler_config.get("hour", 9),
-        str(scheduler_config.get("minute", 0)).zfill(2),
+    print("✓ Scheduler started - Daily digest at {}:{} {}".format(
+        scheduler_config.get("hour", 0),
+        str(scheduler_config.get("minute", 5)).zfill(2),
+        scheduler_config.get("timezone", "Asia/Kolkata"),
     ))
 
     return scheduler
