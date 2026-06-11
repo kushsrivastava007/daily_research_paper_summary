@@ -18,7 +18,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 DATABASE_URL = "sqlite:///data/papers.db"
 
 engine = create_engine(DATABASE_URL, echo=False)
-SessionLocal = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
 
 
