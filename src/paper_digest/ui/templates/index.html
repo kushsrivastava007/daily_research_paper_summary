@@ -230,8 +230,26 @@ function loginWith(provider) {
 }
 
 function logout() {
-  localStorage.removeItem('token');
-  window.location.reload();
+  const token = getToken();
+  if (!token) {
+    window.location.href = '/';
+    return;
+  }
+  fetch('/api/logout', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(() => {
+    localStorage.removeItem('token');
+    window.location.reload();
+  })
+  .catch(() => {
+    localStorage.removeItem('token');
+    window.location.reload();
+  });
 }
 
 function updateAuthButtons() {

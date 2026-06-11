@@ -1,6 +1,8 @@
 # src/paper_digest/ui/app.py
 import os
 import json
+import hashlib
+from datetime import datetime
 from fastapi import FastAPI, Request, Depends, HTTPException, Header
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -8,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
 from typing import Optional, Annotated
+from jose import jwt
 
 from paper_digest.storage.database import (
     init_db,
@@ -18,6 +21,8 @@ from paper_digest.storage.database import (
     update_user_preferences,
     update_user_api_key,
     get_user_groq_api_key,
+    add_token_to_blacklist,
+    is_token_blacklisted,
 )
 from paper_digest.graph.pipeline import run_pipeline
 from paper_digest.auth.oauth import oauth, handle_oauth_callback, get_current_user_id, create_access_token
@@ -64,6 +69,12 @@ def get_user_from_token(authorization: Annotated[Optional[str], Header()] = None
         scheme, token = authorization.split()
         if scheme.lower() != "bearer":
             raise HTTPException(status_code=401, detail="Invalid auth scheme")
+
+        # Check if token is blacklisted
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        if is_token_blacklisted(token_hash):
+            raise HTTPException(status_code=401, detail="Token has been revoked")
+
         user_id = get_current_user_id(token)
         if user_id:
             user = get_user(user_id)
@@ -117,13 +128,6 @@ async def dashboard(request: Request):
             "google_login_enabled": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
             "github_login_enabled": bool(settings.GITHUB_CLIENT_ID and settings.GITHUB_CLIENT_SECRET),
         }
-    )
-    """User dashboard - redirects to index with auth."""
-    papers = get_all_papers()
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={"papers": papers}
     )
 
 
@@ -219,9 +223,40 @@ async def auth_callback(provider: str, request: Request):
     )
 
 
+@app.post("/api/logout", response_class=JSONResponse)
+async def logout_api(authorization: Annotated[Optional[str], Header()] = None):
+    """Logout user - revoke token by adding to blacklist."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise HTTPException(status_code=401, detail="Invalid auth scheme")
+
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        user_id = payload.get("sub")
+        exp_timestamp = payload.get("exp")
+
+        if not user_id or not exp_timestamp:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        expires_at = datetime.fromtimestamp(exp_timestamp)
+        add_token_to_blacklist(token_hash, user_id, expires_at)
+
+        return {"status": "success", "message": "Logged out successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Logout failed: {str(e)}")
+
+
 @app.get("/auth/logout")
-async def logout():
-    """Logout user."""
+async def logout_legacy():
+    """Legacy logout - redirects to home and deletes cookie."""
     response = RedirectResponse(url="/", status_code=302)
     response.delete_cookie("authorization")
     return response

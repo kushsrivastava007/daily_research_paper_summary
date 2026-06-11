@@ -486,8 +486,26 @@
 
         // Logout
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/';
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+            fetch('/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(() => {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            })
+            .catch(() => {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            });
         }
 
         // Initialize
