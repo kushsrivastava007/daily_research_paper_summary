@@ -103,11 +103,11 @@ def send_daily_digest():
 def start_scheduler(scheduler_config: dict = None):
     """Start background scheduler for recurring tasks."""
 
-    # Default config: send digest every day at 00:05 AM IST (for testing)
+    # Default config: send digest every day at 9:00 AM IST
     if scheduler_config is None:
         scheduler_config = {
-            "hour": 0,
-            "minute": 5,
+            "hour": 9,
+            "minute": 0,
             "timezone": "Asia/Kolkata",
         }
 
@@ -117,8 +117,8 @@ def start_scheduler(scheduler_config: dict = None):
     scheduler.add_job(
         run_pipeline_and_send_digest,
         "cron",
-        hour=scheduler_config.get("hour", 0),
-        minute=scheduler_config.get("minute", 5),
+        hour=scheduler_config.get("hour", 9),
+        minute=scheduler_config.get("minute", 0),
         timezone=scheduler_config.get("timezone", "Asia/Kolkata"),
         id="daily_digest",
         name="Run pipeline and send daily paper digest",
@@ -126,8 +126,8 @@ def start_scheduler(scheduler_config: dict = None):
 
     scheduler.start()
     print("✓ Scheduler started - Daily digest at {}:{} {}".format(
-        scheduler_config.get("hour", 0),
-        str(scheduler_config.get("minute", 5)).zfill(2),
+        scheduler_config.get("hour", 9),
+        str(scheduler_config.get("minute", 0)).zfill(2),
         scheduler_config.get("timezone", "Asia/Kolkata"),
     ))
 

@@ -6,6 +6,7 @@ fastapi
 uvicorn
 sqlalchemy
 apscheduler
+pytz
 python-dotenv
 httpx
 arxiv

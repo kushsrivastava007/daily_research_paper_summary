@@ -28,7 +28,7 @@ from paper_digest.graph.pipeline import run_pipeline
 from paper_digest.auth.oauth import oauth, handle_oauth_callback, get_current_user_id, create_access_token
 from paper_digest.auth.config import settings
 from paper_digest.notifications.email import send_welcome_email
-from paper_digest.scheduler.tasks import start_scheduler
+from paper_digest.scheduler.tasks import start_scheduler, send_daily_digest
 from pydantic import BaseModel
 
 app = FastAPI(title="Paper Digest")
@@ -295,6 +295,16 @@ async def set_api_key(
     # TODO: Encrypt the API key before storing
     updated = update_user_api_key(user.id, body.groq_api_key)
     return {"status": "success", "message": "API key updated"}
+
+
+@app.post("/api/test-digest")
+async def test_digest(user: dict = Depends(get_user_from_token)):
+    """Manually trigger the daily digest email for testing."""
+    try:
+        send_daily_digest()
+        return {"status": "success", "message": "Digest email triggered. Check server logs for results."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 @app.post("/api/run")
